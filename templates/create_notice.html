@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Post Notice – CampusConnect{% endblock %}
+{% block page_title %}Post Notice{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-title"><i class="fas fa-bullhorn me-2 text-teal"></i>Post a Notice</div>
+  <div class="page-header-sub">Notices are sent to specific departments and years. A WhatsApp message is auto-generated.</div>
+</div>
+<div class="page-content">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body" style="padding:24px">
+          <form method="POST" action="/notices/create">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Notice Title *</label>
+                <input type="text" name="title" id="noticeTitle" class="form-control" required placeholder="e.g. Exam Schedule Released" oninput="updatePreview()">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Content</label>
+                <textarea name="content" id="noticeContent" class="form-control" rows="4" placeholder="Detailed notice content..." oninput="updatePreview()"></textarea>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                  <option value="general">General</option>
+                  <option value="academic">Academic</option>
+                  <option value="placement">Placement</option>
+                  <option value="finance">Finance</option>
+                  <option value="sports">Sports</option>
+                  <option value="cultural">Cultural</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Department</label>
+                <select name="department" class="form-select" onchange="updatePreview()">
+                  <option value="All">All Departments</option>
+                  {% for d in depts %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Year</label>
+                <select name="year" class="form-select" onchange="updatePreview()">
+                  <option value="All">All Years</option>
+                  <option value="FE">FE</option><option value="SE">SE</option>
+                  <option value="TE">TE</option><option value="BE">BE</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <div class="form-check" style="display:flex;align-items:center;gap:8px">
+                  <input type="checkbox" name="is_important" class="form-check-input" id="impCheck" style="width:18px;height:18px;border-color:var(--c-border)">
+                  <label class="form-check-label" for="impCheck" style="font-size:.88rem;color:var(--c-text);cursor:pointer">Mark as Important</label>
+                </div>
+              </div>
+            </div>
+
+            <!-- WhatsApp Preview -->
+            <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r);padding:16px;margin-top:16px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+                <i class="fab fa-whatsapp" style="color:#25d366;font-size:1.2rem"></i>
+                <span style="font-weight:600;font-size:.85rem;color:var(--c-text)">Auto-generated WhatsApp Message Preview</span>
+              </div>
+              <div id="waPreview" style="background:#0b1220;border-radius:10px;padding:12px;font-size:.82rem;color:#e2eaf6;line-height:1.7;white-space:pre-wrap;font-family:monospace"></div>
+              <p style="font-size:.75rem;color:var(--c-muted);margin-top:8px"><i class="fas fa-info-circle me-1"></i>This message will be available to copy and share directly to WhatsApp groups after posting.</p>
+            </div>
+
+            <button type="submit" class="btn btn-teal btn-lg w-100 mt-4"><i class="fas fa-paper-plane me-2"></i>Post Notice</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function updatePreview() {
+  const title = document.getElementById('noticeTitle').value || 'Notice Title';
+  const content = document.getElementById('noticeContent').value || '';
+  const dept = document.querySelector('[name="department"]').value;
+  const year = document.querySelector('[name="year"]').value;
+  const msg = `📢 *ISBM CampusConnect*\n*${title}*\n\n${content.slice(0,200)}${content.length > 200 ? '...' : ''}\n\n_From: {{ current_user.full_name }} | {{ current_user.role|title }}_\n_Dept: ${dept} | Year: ${year}_`;
+  document.getElementById('waPreview').textContent = msg;
+}
+updatePreview();
+</script>
+{% endblock %}

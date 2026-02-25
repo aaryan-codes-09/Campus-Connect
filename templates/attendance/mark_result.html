@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Mark Attendance{% endblock %}
+{% block content %}
+<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:24px">
+  <div style="max-width:400px;width:100%;text-align:center">
+    <div style="width:80px;height:80px;border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:2rem;
+      {{ 'background:rgba(0,200,160,.15);color:var(--c-teal)' if success else 'background:rgba(255,107,107,.15);color:var(--c-coral)' }}">
+      <i class="fas {{ 'fa-check-circle' if success else 'fa-times-circle' }}"></i>
+    </div>
+    <h3 style="font-weight:700;margin-bottom:.5rem">{{ 'Attendance Marked!' if success else 'Could Not Mark' }}</h3>
+    <p style="color:var(--c-muted);margin-bottom:1.5rem">{{ msg }}</p>
+    {% if subject %}<div style="background:rgba(0,200,160,.07);border:1px solid rgba(0,200,160,.2);border-radius:var(--r-sm);padding:12px;margin-bottom:16px;font-weight:600">{{ subject }}</div>{% endif %}
+    <a href="/dashboard" class="btn btn-teal">Back to Dashboard</a>
+  </div>
+</div>
+{% endblock %}

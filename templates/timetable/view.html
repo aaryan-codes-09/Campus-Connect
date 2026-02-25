@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Timetable – CampusConnect{% endblock %}
+{% block page_title %}Class Timetable{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+  <div>
+    <div class="page-header-title"><i class="fas fa-clock me-2 text-teal"></i>Timetable</div>
+    <div class="page-header-sub">{{ dept }} &nbsp;·&nbsp; {{ year }} Year</div>
+  </div>
+  {% if current_user.role in ('admin','teacher') %}
+  <a href="/timetable/manage" class="btn btn-ghost btn-sm"><i class="fas fa-edit me-2"></i>Manage Timetable</a>
+  {% endif %}
+</div>
+
+{% if depts %}
+<div style="padding:0 28px 16px">
+  <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
+    <select name="dept" class="form-select" style="width:auto">
+      {% for d in depts %}<option value="{{ d.name }}" {% if dept==d.name %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+    </select>
+    <select name="year" class="form-select" style="width:auto">
+      {% for y in years %}<option value="{{ y }}" {% if year==y %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-teal btn-sm">View</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="page-content" style="padding-top:0">
+  <div class="card" style="overflow:auto">
+    <table style="width:100%;border-collapse:collapse;min-width:700px">
+      <thead>
+        <tr style="background:var(--c-surface)">
+          <th style="padding:12px 14px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-muted);border-bottom:1px solid var(--c-border);width:90px">Day</th>
+          {% for p in range(1,8) %}
+          <th style="padding:12px 8px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--c-muted);border-bottom:1px solid var(--c-border);text-align:center">Period {{ p }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for day in days %}
+        <tr style="border-bottom:1px solid var(--c-border)">
+          <td style="padding:12px 14px;font-weight:700;font-size:.85rem;color:var(--c-text);background:var(--c-surface);white-space:nowrap;border-right:1px solid var(--c-border)">{{ day[:3] }}</td>
+          {% for p in range(1,8) %}
+          <td style="padding:6px;vertical-align:top">
+            {% if schedule[day].get(p) %}
+            {% set cell = schedule[day][p] %}
+            <div class="tt-cell">
+              <div class="tt-subject">{{ cell.subject[:20] }}</div>
+              <div class="tt-meta">
+                {% if cell.teacher_name %}<span><i class="fas fa-user me-1"></i>{{ cell.teacher_name.split()[-1] }}</span>{% endif %}
+                {% if cell.room %}<span><i class="fas fa-door-open me-1"></i>{{ cell.room }}</span>{% endif %}
+              </div>
+              {% if cell.time_from %}<div class="tt-meta" style="margin-top:4px;color:var(--c-teal)">{{ cell.time_from }}-{{ cell.time_to }}</div>{% endif %}
+            </div>
+            {% else %}
+            <div class="tt-empty"></div>
+            {% endif %}
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--c-muted)">
+    <span><i class="fas fa-info-circle me-1 text-teal"></i>Timetable for {{ dept }} · {{ year }} Year</span>
+    <span>·</span>
+    <span>Last updated by administration</span>
+  </div>
+</div>
+{% endblock %}

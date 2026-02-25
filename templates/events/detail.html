@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}{{ ev.title }} – CampusConnect{% endblock %}
+{% block page_title %}{{ ev.title[:30] }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="d-flex gap-2 mb-2 flex-wrap">
+    <span class="badge-pill {% if ev.event_type=='technical' %}badge-blue{% elif ev.event_type=='cultural' %}badge-purple{% else %}badge-muted{% endif %}">{{ ev.event_type|title }}</span>
+    <span class="badge-pill {{ 'badge-teal' if ev.status=='upcoming' else 'badge-muted' }}">{{ ev.status|title }}</span>
+  </div>
+  <div class="page-header-title">{{ ev.title }}</div>
+  <div class="page-header-sub">By {{ ev.organizer_name }} · {{ ev.event_date }}</div>
+</div>
+<div class="page-content">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      {% if ev.banner_image %}
+      <img src="/static/uploads/events/{{ ev.banner_image }}" style="width:100%;height:360px;object-fit:cover;border-radius:var(--r);margin-bottom:20px">
+      {% endif %}
+      <div class="card mb-4">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-info-circle"></i>About This Event</div></div>
+        <div class="card-body"><p style="color:var(--c-muted);line-height:1.8">{{ ev.description }}</p>
+        {% if ev.tags %}<div class="mt-3 d-flex flex-wrap gap-1">{% for t in ev.tags.split(',') %}<span class="badge-pill badge-muted" style="font-size:.72rem">#{{ t.strip() }}</span>{% endfor %}</div>{% endif %}</div>
+      </div>
+      {% if regs %}
+      <div class="card mb-4">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-users"></i>Participants ({{ rc }})</div></div>
+        <div class="card-body p-0">
+          <table class="table mb-0">
+            <thead><tr><th>#</th><th>Name</th><th>Department</th><th>Year</th></tr></thead>
+            <tbody>{% for r in regs %}<tr><td style="color:var(--c-muted)">{{ loop.index }}</td><td style="font-weight:600;font-size:.85rem">{{ r.full_name }}</td><td style="font-size:.8rem;color:var(--c-muted)">{{ r.department }}</td><td><span class="badge-pill badge-muted">{{ r.year }}</span></td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
+      </div>{% endif %}
+      {% if mems %}
+      <div class="card">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-images"></i>Event Memories</div><a href="/memories?event={{ ev.id }}" class="btn btn-ghost btn-sm">View All</a></div>
+        <div class="card-body"><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px">{% for m in mems[:6] %}<div style="border-radius:8px;overflow:hidden;aspect-ratio:1"><img src="/static/uploads/memories/{{ m.image_path }}" style="width:100%;height:100%;object-fit:cover" onerror="this.src='https://via.placeholder.com/120/1a2740/7a95b8?text=Photo'"></div>{% endfor %}</div></div>
+      </div>{% endif %}
+    </div>
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-ticket-alt"></i>Registration</div></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+            <div style="background:var(--c-surface);border-radius:var(--r-sm);padding:12px;text-align:center"><div style="font-weight:700;font-size:1.5rem;color:var(--c-teal)">{{ rc }}</div><div style="font-size:.75rem;color:var(--c-muted)">Registered</div></div>
+            <div style="background:var(--c-surface);border-radius:var(--r-sm);padding:12px;text-align:center"><div style="font-weight:700;font-size:1.5rem;color:var(--c-text)">{{ ev.max_participants or '∞' }}</div><div style="font-size:.75rem;color:var(--c-muted)">Capacity</div></div>
+          </div>
+          {% if ev.reg_deadline %}<div class="alert alert-warning" style="font-size:.8rem;padding:.6rem .8rem"><i class="fas fa-clock me-1"></i>Deadline: {{ ev.reg_deadline }}</div>{% endif %}
+          {% if current_user %}
+            {% if ev.status == 'upcoming' %}
+              {% if is_reg %}
+              <div class="alert alert-success" style="font-size:.8rem;padding:.6rem .8rem;margin-bottom:10px"><i class="fas fa-check me-1"></i>You're registered!</div>
+              <form method="POST" action="/events/{{ ev.id }}/unregister"><button type="submit" class="btn btn-danger-soft w-100 btn-sm">Unregister</button></form>
+              {% else %}
+              <form method="POST" action="/events/{{ ev.id }}/register"><button type="submit" class="btn btn-teal w-100 btn-lg">Register Now</button></form>
+              {% endif %}
+            {% else %}<div class="alert alert-info" style="font-size:.82rem">Registration {{ ev.status }}</div>{% endif %}
+          {% else %}<a href="/login" class="btn btn-teal w-100">Login to Register</a>{% endif %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-info"></i>Details</div></div>
+        <div class="card-body" style="font-size:.85rem">
+          {% for icon, label, val in [('fa-calendar','Date',ev.event_date),('fa-clock','Time',ev.event_time or 'TBD'),('fa-map-marker-alt','Venue',ev.venue),('fa-building','Department',ev.department),('fa-user','Organizer',ev.organizer_name)] %}
+          <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--c-border)">
+            <i class="fas {{ icon }} text-teal" style="width:16px;margin-top:2px;font-size:.82rem"></i>
+            <div><div style="font-size:.72rem;color:var(--c-muted)">{{ label }}</div><div style="font-weight:500">{{ val }}</div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

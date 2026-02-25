@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Add User – Admin{% endblock %}
+{% block page_title %}Add New User{% endblock %}
+{% block content %}
+<div class="page-header"><div class="page-header-title"><i class="fas fa-user-plus me-2 text-teal"></i>Add New User</div><div class="page-header-sub">Create teacher, organizer, or admin accounts</div></div>
+<div class="page-content"><div class="row justify-content-center"><div class="col-lg-7"><div class="card"><div class="card-body" style="padding:24px">
+<form method="POST">
+  <!-- Role selector -->
+  <div class="mb-4">
+    <label class="form-label">Role *</label>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--c-surface);border-radius:10px;padding:4px">
+      {% for r,icon,lbl,col in [('student','fa-graduation-cap','Student','teal'),('teacher','fa-chalkboard-teacher','Teacher','amber'),('organizer','fa-star','Organizer','coral'),('admin','fa-cog','Admin','purple')] %}
+      <label style="padding:10px 4px;border-radius:8px;cursor:pointer;text-align:center;transition:all .2s;font-size:.78rem;font-weight:600;color:var(--c-muted)">
+        <input type="radio" name="role" value="{{ r }}" style="display:none" {% if r=='teacher' %}checked{% endif %}>
+        <i class="fas {{ icon }} d-block mb-1" style="font-size:1.1rem"></i>{{ lbl }}
+      </label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="row g-3">
+    <div class="col-md-6"><label class="form-label">Full Name *</label><input type="text" name="full_name" class="form-control" required placeholder="Dr. John Doe"></div>
+    <div class="col-md-6"><label class="form-label">Username *</label><input type="text" name="username" class="form-control" required placeholder="john_doe"></div>
+    <div class="col-md-6"><label class="form-label">Email *</label><input type="email" name="email" class="form-control" required placeholder="john@isbm.edu.in"></div>
+    <div class="col-md-6"><label class="form-label">Phone</label><input type="tel" name="phone" class="form-control" placeholder="+91 9876543210"></div>
+    <div class="col-md-6"><label class="form-label">Department</label><select name="department" class="form-select"><option value="">Select Department</option>{% for d in depts %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><label class="form-label">Year</label><select name="year" class="form-select"><option value="">N/A</option><option value="FE">FE</option><option value="SE">SE</option><option value="TE">TE</option><option value="BE">BE</option></select></div>
+    <div class="col-md-3"><label class="form-label">Roll Number</label><input type="text" name="roll_number" class="form-control" placeholder="Optional"></div>
+    <div class="col-12"><label class="form-label">Password *</label><input type="password" name="password" class="form-control" required placeholder="Min 6 characters"></div>
+  </div>
+  <div class="alert alert-info mt-3" style="font-size:.82rem"><i class="fas fa-info-circle me-2"></i>Teacher and Organizer accounts can only be created by Admin. Students can self-register.</div>
+  <button type="submit" class="btn btn-teal btn-lg w-100 mt-2"><i class="fas fa-user-plus me-2"></i>Create Account</button>
+</form>
+</div></div></div></div></div>
+<script>
+// Highlight selected role tab
+document.querySelectorAll('[name="role"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.querySelectorAll('[name="role"]').forEach(o => {
+      o.parentElement.style.background = '';
+      o.parentElement.style.color = 'var(--c-muted)';
+    });
+    r.parentElement.style.background = 'var(--c-card)';
+    r.parentElement.style.color = 'var(--c-teal)';
+  });
+});
+document.querySelector('[name="role"]:checked').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

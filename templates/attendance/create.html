@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}New Attendance Session – CampusConnect{% endblock %}
+{% block page_title %}Create QR Session{% endblock %}
+{% block extra_css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-title"><i class="fas fa-qrcode me-2 text-teal"></i>Create Attendance Session</div>
+  <div class="page-header-sub">Generate a QR code for students to scan and mark attendance</div>
+</div>
+<div class="page-content">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-edit"></i>Session Details</div></div>
+        <div class="card-body" style="padding:24px">
+          <form method="POST" action="/attendance/create">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Subject *</label>
+                <input type="text" name="subject" class="form-control" placeholder="e.g. Data Structures" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Room</label>
+                <input type="text" name="room" class="form-control" placeholder="e.g. CS-101">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Department</label>
+                <select name="department" class="form-select">
+                  {% for d in depts %}<option value="{{ d.name }}" {% if d.name == current_user.department %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Year</label>
+                <select name="year" class="form-select">
+                  <option value="FE">FE</option><option value="SE">SE</option>
+                  <option value="TE" selected>TE</option><option value="BE">BE</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Duration (mins)</label>
+                <select name="duration" class="form-select">
+                  <option value="5">5 min</option><option value="10">10 min</option>
+                  <option value="15" selected>15 min</option><option value="30">30 min</option>
+                  <option value="60">60 min</option>
+                </select>
+              </div>
+            </div>
+            <div style="background:rgba(0,200,160,.07);border:1px solid rgba(0,200,160,.2);border-radius:var(--r-sm);padding:12px 14px;margin:16px 0;font-size:.82rem;color:var(--c-muted)">
+              <i class="fas fa-info-circle me-2 text-teal"></i>
+              A unique QR code will be generated. Students scan it to mark their attendance. The QR expires after the selected duration.
+            </div>
+            <button type="submit" class="btn btn-teal btn-lg w-100">
+              <i class="fas fa-qrcode me-2"></i>Generate QR Code
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

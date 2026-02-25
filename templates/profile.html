@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between">
+  <div class="page-header-title"><i class="fas fa-user me-2 text-teal"></i>My Profile</div>
+  <a href="/profile/edit" class="btn btn-ghost btn-sm"><i class="fas fa-edit me-2"></i>Edit</a>
+</div>
+<div class="page-content"><div class="row g-4">
+  <div class="col-lg-4">
+    <div class="card text-center" style="padding:24px">
+      <div class="avatar mx-auto mb-3 {{ 'avatar-amber' if u.role=='teacher' else 'avatar-coral' if u.role=='organizer' else 'avatar-purple' if u.role=='admin' else 'avatar-teal' }}" style="width:72px;height:72px;font-size:1.8rem">{{ u.full_name[0] }}</div>
+      <h4 style="font-weight:700">{{ u.full_name }}</h4>
+      <div class="d-flex justify-content-center gap-2 mt-2 flex-wrap">
+        <span class="badge-pill {{ 'badge-amber' if u.role=='teacher' else 'badge-coral' if u.role=='organizer' else 'badge-purple' if u.role=='admin' else 'badge-teal' }}">{{ u.role|title }}</span>
+        {% if u.department %}<span class="badge-pill badge-muted">{{ u.department[:20] }}</span>{% endif %}
+      </div>
+      {% if u.bio %}<p style="color:var(--c-muted);font-size:.85rem;margin-top:12px;line-height:1.6">{{ u.bio }}</p>{% endif %}
+    </div>
+    <div class="card mt-3">
+      <div class="card-header"><div class="card-header-title"><i class="fas fa-id-card"></i>Details</div></div>
+      <div class="card-body" style="font-size:.85rem" style = "color : white">
+        {% for icon, label, val in [('fa-envelope','Email',u.email),('fa-phone','Phone',u.phone or 'N/A'),('fa-id-badge','Roll No.',u.roll_number or 'N/A'),('fa-building','Department',u.department or 'N/A'),('fa-calendar','Year',u.year or 'N/A')] %}
+        <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--c-border)">
+          <i class="fas {{ icon }} text-teal" style="width:14px;font-size:.8rem;margin-top:2px"></i>
+          <div><div style="font-size:.7rem;color:var(--c-muted)">{{ label }}</div><div style="font-weight:500; color:white;">{{ val }}</div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-header"><div class="card-header-title"><i class="fas fa-calendar-check"></i>Registered Events</div></div>
+      <div class="card-body p-0">
+        {% if my_events %}<table class="table mb-0"><thead><tr><th>Event</th><th>Date</th><th>Status</th></tr></thead><tbody>{% for ev in my_events %}<tr><td><a href="/events/{{ ev.id }}" style="color:var(--c-teal);font-weight:600">{{ ev.title[:35] }}</a></td><td><span style="font-size:.8rem">{{ ev.event_date }}</span></td><td><span class="badge-pill {{ 'badge-teal' if ev.status=='upcoming' else 'badge-muted' }}">{{ ev.status|title }}</span></td></tr>{% endfor %}</tbody></table>
+        {% else %}<div style="padding:24px;text-align:center;color:var(--c-muted);font-size:.85rem">No events registered. <a href="/events" style="color:var(--c-teal)">Browse events →</a></div>{% endif %}
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-header-title"><i class="fas fa-trophy"></i>My Achievements</div><a href="/achievements/add" class="btn btn-amber btn-sm">+ Add</a></div>
+      <div class="card-body">
+        {% if my_ach %}
+        <div class="row g-2">{% for a in my_ach %}<div class="col-md-6"><div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:9px;padding:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:600;font-size:.85rem">{{ a.title[:30] }}</span><span class="badge-pill {{ 'badge-teal' if a.approved else 'badge-amber' }}" style="font-size:.62rem">{{ 'Approved' if a.approved else 'Pending' }}</span></div><div style="font-size:.75rem;color:var(--c-muted)">{{ a.achievement_type|title }} · {{ a.date or 'N/A' }}</div></div></div>{% endfor %}</div>
+        {% else %}<div style="text-align:center;color:var(--c-muted);font-size:.85rem;padding:16px">No achievements yet. <a href="/achievements/add" style="color:var(--c-teal)">Add one →</a></div>{% endif %}
+      </div>
+    </div>
+  </div>
+</div></div>
+{% endblock %}

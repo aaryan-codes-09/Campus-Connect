@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Event Memories – CampusConnect{% endblock %}
+{% block page_title %}Event Memories{% endblock %}
+{% block extra_css %}<style>
+.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;flex-direction:column;align-items:center;justify-content:center}
+.lb.on{display:flex}
+.lb img{max-width:90vw;max-height:78vh;object-fit:contain;border-radius:12px}
+.lb-close{position:absolute;top:20px;right:24px;color:white;font-size:1.8rem;cursor:pointer;opacity:.8}
+.lb-close:hover{opacity:1}
+</style>{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+  <div><div class="page-header-title"><i class="fas fa-images me-2 text-teal"></i>Event Memories</div><div class="page-header-sub">Browse, like, and download photos from campus events</div></div>
+  {% if current_user and current_user.role in ('organizer','admin') %}<a href="/memories/upload" class="btn btn-teal"><i class="fas fa-upload me-2"></i>Upload Photos</a>{% endif %}
+</div>
+<div class="page-content" style="padding-top:0">
+  <div class="card mb-4" style="padding:14px 16px">
+    <form method="GET" class="row g-2 align-items-end">
+      <div class="col-md-4"><select name="event" class="form-select"><option value="">🎉 All Events</option>{% for ev in evs %}<option value="{{ ev.id }}" {% if ef==ev.id|string %}selected{% endif %}>{{ ev.title[:40] }}</option>{% endfor %}</select></div>
+      <div class="col-md-3"><select name="album" class="form-select"><option value="">📁 All Albums</option>{% for a in albums if a.album %}<option value="{{ a.album }}" {% if af==a.album %}selected{% endif %}>{{ a.album }}</option>{% endfor %}</select></div>
+      <div class="col-md-2"><button type="submit" class="btn btn-teal w-100">Filter</button></div>
+      <div class="col-md-2"><a href="/memories" class="btn btn-ghost w-100">Clear</a></div>
+    </form>
+  </div>
+
+  {% if mems %}
+  <div class="memory-grid">
+    {% for m in mems %}
+    <div class="memory-item" onclick="openLb('{{ m.image_path }}','{{ m.title or 'Campus Memory' }}','{{ m.uploader_name }}',{{ m.id }},{{ m.likes }})">
+      <img src="/static/uploads/memories/{{ m.image_path }}" alt="{{ m.title }}" onerror="this.src='https://via.placeholder.com/300x220/1a2740/7a95b8?text=Photo'">
+      <div class="memory-overlay">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end">
+          <div>
+            <div style="font-weight:600;font-size:.82rem">{{ m.title or 'Campus Memory' }}</div>
+            {% if m.event_title %}<div style="font-size:.72rem;opacity:.75">{{ m.event_title[:30] }}</div>{% endif %}
+            <div style="font-size:.7rem;opacity:.65">{{ m.uploader_name }}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <button class="btn-like {{ 'liked' if m.id in liked else '' }}" id="lbtn-{{ m.id }}" onclick="event.stopPropagation();likeIt({{ m.id }})" style="background:{{ 'rgba(255,107,107,.3)' if m.id in liked else 'rgba(255,255,255,.15)' }};border:none;border-radius:20px;color:{{ 'var(--c-coral)' if m.id in liked else 'white' }};padding:4px 8px;font-size:.72rem;cursor:pointer;display:flex;align-items:center;gap:4px">
+              <i class="fas fa-heart"></i><span id="lc-{{ m.id }}">{{ m.likes }}</span>
+            </button>
+            <a href="/memories/{{ m.id }}/download" onclick="event.stopPropagation()" style="background:rgba(255,255,255,.15);border-radius:20px;color:white;padding:4px 8px;font-size:.72rem;white-space:nowrap">
+              <i class="fas fa-download me-1"></i>Download
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="padding:60px;text-align:center;color:var(--c-muted)">
+    <i class="fas fa-camera" style="font-size:3rem;opacity:.25;margin-bottom:16px;display:block"></i>
+    <h5>No memories yet.</h5>
+    {% if current_user and current_user.role in ('organizer','admin') %}<div class="mt-3"><a href="/memories/upload" class="btn btn-teal btn-sm">Upload First Memory</a></div>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Lightbox -->
+<div class="lb" id="lb">
+  <span class="lb-close" onclick="closeLb()"><i class="fas fa-times"></i></span>
+  <img id="lbImg" src="" alt="">
+  <div style="text-align:center;margin-top:16px;color:white">
+    <h5 id="lbTitle" style="margin-bottom:4px"></h5>
+    <p id="lbInfo" style="color:rgba(255,255,255,.6);font-size:.82rem;margin-bottom:12px"></p>
+    <div style="display:flex;justify-content:center;gap:10px">
+      <button id="lbLikeBtn" class="btn btn-ghost" style="color:white;border-color:rgba(255,255,255,.3)" onclick="likeFromLb()"><i class="fas fa-heart me-1"></i><span id="lbLc">0</span></button>
+      <a id="lbDl" href="#" class="btn btn-teal"><i class="fas fa-download me-1"></i>Download</a>
+    </div>
+  </div>
+</div>
+
+<script>
+let lbId = null;
+function openLb(path, title, uploader, id, likes) {
+  lbId = id;
+  document.getElementById('lbImg').src = '/static/uploads/memories/' + path;
+  document.getElementById('lbTitle').textContent = title;
+  document.getElementById('lbInfo').textContent = 'By ' + uploader;
+  document.getElementById('lbLc').textContent = likes;
+  document.getElementById('lbDl').href = '/memories/' + id + '/download';
+  document.getElementById('lb').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function closeLb() { document.getElementById('lb').classList.remove('on'); document.body.style.overflow = ''; }
+document.getElementById('lb').addEventListener('click', e => { if (e.target === document.getElementById('lb')) closeLb(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLb(); });
+async function likeIt(id) {
+  {% if not current_user %}window.location='/login';return;{% endif %}
+  const r = await fetch('/memories/' + id + '/like', {method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'}});
+  const d = await r.json();
+  document.getElementById('lc-' + id).textContent = d.likes;
+  const btn = document.getElementById('lbtn-' + id);
+  btn.style.background = d.liked ? 'rgba(255,107,107,.3)' : 'rgba(255,255,255,.15)';
+  btn.style.color = d.liked ? 'var(--c-coral)' : 'white';
+  if (lbId === id) document.getElementById('lbLc').textContent = d.likes;
+}
+function likeFromLb() { if (lbId) likeIt(lbId); }
+</script>
+{% endblock %}

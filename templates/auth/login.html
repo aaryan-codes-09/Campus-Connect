@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Login – CampusConnect{% endblock %}
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse at 30% 50%,rgba(0,200,160,.08) 0%,transparent 70%)">
+  <div style="width:100%;max-width:440px">
+    <div class="text-center mb-4">
+      <div class="logo-mark mx-auto mb-3" style="width:52px;height:52px;font-size:1.3rem">CC</div>
+      <h2 style="font-weight:800;font-size:1.6rem;margin-bottom:.3rem">Welcome Back</h2>
+      <p style="color:var(--c-muted);font-size:.87rem">ISBM College of Engineering, Pune</p>
+    </div>
+
+    <div class="card">
+      <div class="card-body" style="padding:28px">
+        <!-- Role Tabs -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:24px;background:var(--c-surface);border-radius:10px;padding:4px">
+          {% for r,icon,lbl in [('student','fa-graduation-cap','Student'),('teacher','fa-chalkboard-teacher','Teacher'),('organizer','fa-star','Organizer'),('admin','fa-cog','Admin')] %}
+          <button type="button" class="role-tab" data-role="{{ r }}" onclick="setRole('{{ r }}')" style="padding:8px 4px;border-radius:8px;border:none;background:transparent;color:var(--c-muted);font-size:.73rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center">
+            <i class="fas {{ icon }} d-block mb-1"></i>{{ lbl }}
+          </button>
+          {% endfor %}
+        </div>
+
+        <form method="POST" action="/login">
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <div style="position:relative">
+              <i class="fas fa-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--c-muted);font-size:.85rem;pointer-events:none"></i>
+              <input type="email" name="email" id="emailInput" class="form-control" placeholder="your@email.com" required style="padding-left:36px">
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Password</label>
+            <div style="position:relative">
+              <i class="fas fa-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--c-muted);font-size:.85rem;pointer-events:none"></i>
+              <input type="password" name="password" id="pwdInput" class="form-control" placeholder="Your password" required style="padding-left:36px;padding-right:36px">
+              <button type="button" onclick="togglePwd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--c-muted);cursor:pointer"><i class="fas fa-eye" id="eyeIcon"></i></button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-teal w-100 btn-lg fw-600">
+            <i class="fas fa-sign-in-alt me-2"></i>Login
+          </button>
+        </form>
+
+        <div class="divider"></div>
+        <p class="text-center" style="font-size:.83rem;color:var(--c-muted)">
+          Don't have an account? <a href="/register" style="color:var(--c-teal);font-weight:600">Register as Student</a>
+        </p>
+
+        <!-- Demo credentials -->
+        <div style="background:var(--c-surface);border-radius:var(--r-sm);padding:12px 14px;margin-top:14px" id="demoBox">
+          <div style="font-size:.72rem;font-weight:700;color:var(--c-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Demo Credentials</div>
+          <div class="d-flex flex-column gap-1" id="demoCreds">
+            <div class="demo-cred" style="font-size:.78rem;color:var(--c-muted)"><span style="color:var(--c-teal);font-weight:600">Student:</span> student@isbm.edu.in / student@123</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const creds = {
+  student: {email:'student@isbm.edu.in', pwd:'student@123', hint:'student@isbm.edu.in / student@123'},
+  teacher: {email:'teacher@isbm.edu.in', pwd:'teacher@123', hint:'teacher@isbm.edu.in / teacher@123'},
+  organizer: {email:'organizer@isbm.edu.in', pwd:'organizer@123', hint:'organizer@isbm.edu.in / organizer@123'},
+  admin: {email:'admin@isbm.edu.in', pwd:'admin@isbm123', hint:'admin@isbm.edu.in / admin@isbm123'},
+};
+const tabColors = {student:'var(--c-teal)',teacher:'var(--c-amber)',organizer:'var(--c-coral)',admin:'var(--c-purple)'};
+
+function setRole(r) {
+  document.querySelectorAll('.role-tab').forEach(t => {
+    t.style.background = t.dataset.role===r ? 'var(--c-card)' : 'transparent';
+    t.style.color = t.dataset.role===r ? tabColors[r] : 'var(--c-muted)';
+  });
+  const c = creds[r];
+  document.getElementById('emailInput').value = c.email;
+  document.getElementById('pwdInput').value = c.pwd;
+  document.getElementById('demoCreds').innerHTML = `<div style="font-size:.78rem;color:var(--c-muted)"><span style="color:${tabColors[r]};font-weight:600">${r.charAt(0).toUpperCase()+r.slice(1)}:</span> ${c.hint}</div>`;
+}
+function togglePwd() {
+  const p = document.getElementById('pwdInput'); const e = document.getElementById('eyeIcon');
+  p.type = p.type==='password' ? 'text' : 'password';
+  e.className = p.type==='password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+}
+// Init
+setRole('student');
+</script>
+{% endblock %}

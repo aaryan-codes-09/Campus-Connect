@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Manage Users – Admin{% endblock %}
+{% block page_title %}Manage Users{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between flex-wrap gap-3">
+  <div><div class="page-header-title"><i class="fas fa-users-cog me-2 text-teal"></i>Manage Users</div><div class="page-header-sub">{{ users|length }} total users</div></div>
+  <a href="/admin/add-user" class="btn btn-teal"><i class="fas fa-user-plus me-2"></i>Add User</a>
+</div>
+<div class="page-content"><div class="card"><div class="table-responsive" style="max-height:600px;overflow-y:auto">
+<table class="table mb-0" style="white-space:nowrap">
+  <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Dept</th><th>Year</th><th>Status</th><th>Change Role</th><th>Action</th></tr></thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td style="color:var(--c-muted)">{{ loop.index }}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="avatar {{ 'avatar-amber' if u.role=='teacher' else 'avatar-coral' if u.role=='organizer' else 'avatar-purple' if u.role=='admin' else 'avatar-teal' }}" style="width:26px;height:26px;font-size:.7rem;flex-shrink:0">{{ u.full_name[0] }}</div>
+          <span style="font-weight:600;font-size:.85rem">{{ u.full_name[:22] }}</span>
+        </div>
+      </td>
+      <td style="font-size:.78rem;color:var(--c-muted)">{{ u.email[:28] }}</td>
+      <td><span class="badge-pill {{ 'badge-amber' if u.role=='teacher' else 'badge-coral' if u.role=='organizer' else 'badge-purple' if u.role=='admin' else 'badge-teal' }}">{{ u.role|title }}</span></td>
+      <td style="font-size:.78rem;color:var(--c-muted)">{{ (u.department or 'N/A')[:15] }}</td>
+      <td><span class="badge-pill badge-muted">{{ u.year or '-' }}</span></td>
+      <td><span class="badge-pill {{ 'badge-teal' if u.is_active else 'badge-coral' }}">{{ 'Active' if u.is_active else 'Off' }}</span></td>
+      <td>
+        <form method="POST" action="/admin/users/{{ u.id }}/action">
+          <input type="hidden" name="action" value="role">
+          <div style="display:flex;gap:4px">
+            <select name="role" class="form-select form-select-sm" style="width:110px;font-size:.75rem;padding:.25rem .5rem">
+              {% for r in ['student','teacher','organizer','admin'] %}
+              <option value="{{ r }}" {% if u.role==r %}selected{% endif %}>{{ r|title }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-success-soft btn-sm" style="white-space:nowrap">Set</button>
+          </div>
+        </form>
+      </td>
+      <td>
+        <form method="POST" action="/admin/users/{{ u.id }}/action">
+          <input type="hidden" name="action" value="toggle">
+          <button type="submit" class="btn {{ 'btn-danger-soft' if u.is_active else 'btn-success-soft' }} btn-sm">{{ 'Disable' if u.is_active else 'Enable' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div></div></div>
+{% endblock %}

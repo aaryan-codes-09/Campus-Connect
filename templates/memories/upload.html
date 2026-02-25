@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Upload Memories{% endblock %}
+{% block page_title %}Upload Memories{% endblock %}
+{% block content %}
+<div class="page-header"><div class="page-header-title"><i class="fas fa-upload me-2 text-teal"></i>Upload Event Memories</div><div class="page-header-sub">Share photos with all students</div></div>
+<div class="page-content"><div class="row justify-content-center"><div class="col-lg-7"><div class="card"><div class="card-body" style="padding:24px">
+<form method="POST" enctype="multipart/form-data">
+  <div class="row g-3">
+    <div class="col-12"><label class="form-label">Event (Optional)</label><select name="event_id" class="form-select"><option value="">-- Not linked to event --</option>{% for ev in evs %}<option value="{{ ev.id }}">{{ ev.title }}</option>{% endfor %}</select></div>
+    <div class="col-md-6"><label class="form-label">Title</label><input type="text" name="title" class="form-control" placeholder="e.g. TechFest 2025 Highlights"></div>
+    <div class="col-md-6"><label class="form-label">Album</label><input type="text" name="album" class="form-control" placeholder="e.g. Cultural Night 2025"></div>
+    <div class="col-12"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2" placeholder="Optional caption..."></textarea></div>
+    <div class="col-12">
+      <label class="form-label">Photos *</label>
+      <div id="dz" onclick="document.getElementById('pi').click()" style="border:2px dashed var(--c-border);border-radius:var(--r);padding:40px;text-align:center;cursor:pointer;transition:border-color .2s;background:var(--c-surface)" onmouseover="this.style.borderColor='var(--c-teal)'" onmouseout="this.style.borderColor='var(--c-border)'">
+        <i class="fas fa-cloud-upload-alt" style="font-size:2.5rem;color:var(--c-teal);opacity:.6;margin-bottom:12px;display:block"></i>
+        <div style="font-weight:600;margin-bottom:4px">Drag & Drop or Click to Select</div>
+        <div style="font-size:.8rem;color:var(--c-muted)">JPG, PNG, GIF, WEBP · Max 20MB per file · Multiple files allowed</div>
+        <input type="file" name="photos" id="pi" multiple accept="image/*" style="display:none" onchange="preview(this.files)">
+      </div>
+      <div id="pv" style="display:none;margin-top:12px;display:none"></div>
+      <div id="cnt" style="font-size:.8rem;color:var(--c-muted);margin-top:6px"></div>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-teal btn-lg w-100 mt-4" id="sb" disabled><i class="fas fa-upload me-2"></i>Upload Photos</button>
+</form>
+</div></div></div></div></div>
+<script>
+function preview(files) {
+  const pv = document.getElementById('pv'); const cnt = document.getElementById('cnt'); const sb = document.getElementById('sb');
+  if (!files.length) { pv.style.display='none'; cnt.textContent=''; sb.disabled=true; return; }
+  pv.style.display='grid'; pv.style.gridTemplateColumns='repeat(auto-fill,minmax(90px,1fr))'; pv.style.gap='8px';
+  pv.innerHTML = '';
+  Array.from(files).forEach(f => {
+    const div = document.createElement('div');
+    div.style.cssText = 'border-radius:8px;overflow:hidden;aspect-ratio:1';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    div.appendChild(img); pv.appendChild(div);
+  });
+  cnt.textContent = files.length + ' file(s) selected'; sb.disabled = false;
+}
+const dz = document.getElementById('dz');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor='var(--c-teal)'; dz.style.background='rgba(0,200,160,.05)'; });
+dz.addEventListener('dragleave', () => { dz.style.borderColor='var(--c-border)'; dz.style.background='var(--c-surface)'; });
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.style.borderColor='var(--c-border)'; dz.style.background='var(--c-surface)';
+  const dt = new DataTransfer(); Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+  document.getElementById('pi').files = dt.files; preview(dt.files);
+});
+</script>
+{% endblock %}

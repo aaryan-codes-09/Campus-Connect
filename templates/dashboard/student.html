@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard – CampusConnect{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+  <div>
+    <div class="page-header-title">Hey, {{ current_user.full_name.split()[0] }} 👋</div>
+    <div class="page-header-sub">
+      <span class="badge-pill badge-teal me-2">{{ current_user.year or 'Student' }}</span>
+      <span class="badge-pill badge-muted">{{ (current_user.department or 'N/A')[:30] }}</span>
+    </div>
+  </div>
+  <a href="/attendance" class="btn btn-ghost btn-sm"><i class="fas fa-qrcode me-1"></i>My Attendance</a>
+</div>
+
+<div class="page-content">
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon stat-icon-teal"><i class="fas fa-calendar-check"></i></div><div><div class="stat-num">{{ stats.my_events }}</div><div class="stat-label">My Events</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon stat-icon-amber"><i class="fas fa-calendar-star"></i></div><div><div class="stat-num">{{ stats.upcoming }}</div><div class="stat-label">Upcoming</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon stat-icon-coral"><i class="fas fa-qrcode"></i></div><div><div class="stat-num">{{ stats.attendance }}</div><div class="stat-label">Sessions Attended</div></div></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card"><div class="stat-icon stat-icon-purple"><i class="fas fa-trophy"></i></div><div><div class="stat-num">{{ stats.achievements }}</div><div class="stat-label">Achievements</div></div></div></div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <!-- Today's Timetable -->
+      {% if today_tt %}
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-header-title"><i class="fas fa-clock"></i>Today's Schedule ({{ now.strftime('%A') }})</div>
+          <a href="/timetable" class="btn btn-ghost btn-sm">Full Timetable</a>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-column gap-2">
+            {% for p in today_tt %}
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--c-surface);border-radius:9px;border:1px solid var(--c-border)">
+              <div style="width:44px;height:44px;border-radius:10px;background:rgba(0,200,160,.1);border:1.5px solid rgba(0,200,160,.25);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;color:var(--c-teal);flex-shrink:0">{{ p.period }}</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:.88rem">{{ p.subject }}</div>
+                <div style="font-size:.75rem;color:var(--c-muted)"><i class="fas fa-user me-1"></i>{{ p.teacher_name or 'N/A' }} &nbsp;·&nbsp; <i class="fas fa-door-open me-1"></i>{{ p.room or 'N/A' }}</div>
+              </div>
+              <span style="font-size:.75rem;color:var(--c-muted);white-space:nowrap">{{ p.time_from }} – {{ p.time_to }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- My Registered Events -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-header-title"><i class="fas fa-ticket-alt"></i>My Events</div>
+          <a href="/events" class="btn btn-ghost btn-sm">Browse All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if my_events %}
+          <table class="table mb-0">
+            <thead><tr><th>Event</th><th>Date</th><th>Type</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for ev in my_events %}
+              <tr>
+                <td><a href="/events/{{ ev.id }}" style="color:var(--c-teal);font-weight:600">{{ ev.title[:35] }}</a></td>
+                <td><span style="font-size:.8rem">{{ ev.event_date }}</span></td>
+                <td><span class="badge-pill badge-muted">{{ ev.event_type|title }}</span></td>
+                <td><span class="badge-pill {{ 'badge-teal' if ev.status=='upcoming' else 'badge-muted' }}">{{ ev.status|title }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div style="padding:28px;text-align:center;color:var(--c-muted)">
+            <i class="fas fa-calendar-times" style="font-size:2rem;opacity:.4;margin-bottom:8px;display:block"></i>
+            No events registered yet.
+            <div class="mt-2"><a href="/events" class="btn btn-teal btn-sm">Browse Events</a></div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-bolt"></i>Quick Actions</div></div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
+            {% for href,icon,label,col in [('/events','fa-calendar','Browse Events','teal'),('/timetable','fa-clock','Timetable','amber'),('/attendance','fa-qrcode','Attendance','coral'),('/memories','fa-images','Memories','purple'),('/achievements/add','fa-trophy','Add Achievement','blue'),('/notices','fa-bell','Notices','muted')] %}
+            <a href="{{ href }}" style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:10px;padding:14px 10px;text-align:center;color:var(--c-{{ col if col!='muted' else 'muted' }});text-decoration:none;transition:all .2s;display:block" onmouseover="this.style.background='var(--c-card)'" onmouseout="this.style.background='var(--c-surface)'">
+              <i class="fas {{ icon }}" style="font-size:1.3rem;display:block;margin-bottom:6px"></i>
+              <div style="font-size:.78rem;font-weight:600">{{ label }}</div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <!-- Notices for this student -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-header-title"><i class="fas fa-bell"></i>My Notices</div>
+          <a href="/notices" class="btn btn-ghost btn-sm">All</a>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-column gap-2">
+            {% for n in notices %}
+            <div class="notice-item {{ 'important' if n.is_important else n.category }}">
+              <div class="d-flex gap-1 mb-1 flex-wrap">
+                {% if n.is_important %}<span class="badge-pill badge-coral" style="font-size:.62rem">IMPORTANT</span>{% endif %}
+                <span class="badge-pill badge-muted" style="font-size:.62rem">{{ n.category|title }}</span>
+              </div>
+              <div class="notice-item-title" style="font-size:.85rem">{{ n.title }}</div>
+              <div class="notice-item-meta" style="font-size:.72rem">
+                <span>{{ n.author_name }}</span><span>{{ n.created_at[:10] }}</span>
+              </div>
+            </div>
+            {% else %}
+            <div style="text-align:center;color:var(--c-muted);font-size:.85rem;padding:16px">No notices for you right now.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Info card -->
+      <div class="card" style="color : white">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-info-circle"></i>My Info</div></div>
+        <div class="card-body" style="font-size:.85rem">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--c-muted)">Roll No.</span><strong>{{ current_user.roll_number or 'N/A' }}</strong></div>
+            <div class="divider" style="margin:0"></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--c-muted)">Department</span><strong style="text-align:right;max-width:60%">{{ (current_user.department or 'N/A')[:25] }}</strong></div>
+            <div class="divider" style="margin:0"></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--c-muted)">Year</span><strong>{{ current_user.year or 'N/A' }}</strong></div>
+            <div class="divider" style="margin:0"></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--c-muted)">Email</span><strong style="font-size:.8rem">{{ current_user.email }}</strong></div>
+          </div>
+          <a href="/profile/edit" class="btn btn-ghost btn-sm w-100 mt-3">Edit Profile</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

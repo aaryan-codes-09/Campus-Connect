@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Live Session – {{ sess.subject }}{% endblock %}
+{% block page_title %}Live QR Session{% endblock %}
+{% block extra_css %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+.live-indicator{display:inline-flex;align-items:center;gap:6px;background:rgba(0,200,160,.12);border:1px solid rgba(0,200,160,.3);border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:700;color:var(--c-teal)}
+.countdown{font-family:'Space Grotesk',sans-serif;font-size:3rem;font-weight:800;color:var(--c-teal);text-align:center}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+  <div>
+    <div class="page-header-title">
+      {{ sess.subject }}
+      {% if sess.is_active %}<span class="live-indicator ms-2"><span class="att-pulse"></span>LIVE</span>{% else %}<span class="badge-pill badge-muted ms-2">Closed</span>{% endif %}
+    </div>
+    <div class="page-header-sub">{{ sess.department }} · {{ sess.year }} · {{ sess.date }} · Room: {{ sess.room or 'N/A' }}</div>
+  </div>
+  {% if sess.is_active %}
+  <form method="POST" action="/attendance/session/{{ sess.id }}/close">
+    <button type="submit" class="btn btn-danger-soft" onclick="return confirm('Close this session? Students can no longer mark attendance.')"><i class="fas fa-stop me-2"></i>Close Session</button>
+  </form>
+  {% endif %}
+</div>
+<div class="page-content">
+  <div class="row g-4">
+    <!-- QR Code -->
+    <div class="col-lg-5">
+      <div class="card text-center">
+        <div class="card-header"><div class="card-header-title mx-auto"><i class="fas fa-qrcode"></i>Scan to Mark Attendance</div></div>
+        <div class="card-body" style="padding:24px">
+          {% if sess.is_active %}
+          <!-- QR Code rendered by JS -->
+          <div style="display:flex;justify-content:center;margin-bottom:16px">
+            <div style="background:white;padding:16px;border-radius:12px;display:inline-block;box-shadow:0 4px 24px rgba(0,0,0,.4)" id="qrDiv"></div>
+          </div>
+          <div class="qr-token mb-3">{{ sess.session_token }}</div>
+          <p style="color:var(--c-muted);font-size:.82rem;margin-bottom:16px">Students scan this QR code or enter the token at<br><strong style="color:var(--c-teal)">campusconnect/attendance/mark/{{ sess.session_token }}</strong></p>
+          <div class="countdown" id="countdown">--:--</div>
+          <p style="color:var(--c-muted);font-size:.75rem">Time remaining</p>
+          {% else %}
+          <div style="padding:32px;color:var(--c-muted)">
+            <i class="fas fa-times-circle" style="font-size:3rem;opacity:.4;margin-bottom:12px;display:block;color:var(--c-coral)"></i>
+            Session Closed
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Attendance List -->
+    <div class="col-lg-7">
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-header-title"><i class="fas fa-users"></i>Present Students (<span id="presentCount">{{ present_count }}</span> / {{ total_students }})</div>
+          {% if sess.is_active %}<button class="btn btn-success-soft btn-sm" onclick="refreshAttendance()"><i class="fas fa-sync me-1"></i>Refresh</button>{% endif %}
+        </div>
+        <div class="card-body p-0" id="attendanceList">
+          {% if records %}
+          <table class="table mb-0">
+            <thead><tr><th>#</th><th>Student</th><th>Roll No.</th><th>Year</th><th>Time</th></tr></thead>
+            <tbody>
+              {% for r in records %}
+              <tr>
+                <td style="font-size:.85rem;color:var(--c-muted)">{{ loop.index }}</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="avatar avatar-teal" style="width:26px;height:26px;font-size:.7rem;flex-shrink:0">{{ r.student_name[0] if r.student_name else 'S' }}</div>
+                    <span style="font-weight:600;font-size:.85rem">{{ r.student_name }}</span>
+                  </div>
+                </td>
+                <td><span style="font-size:.8rem;color:var(--c-muted)">{{ r.roll_number or 'N/A' }}</span></td>
+                <td><span class="badge-pill badge-muted">{{ r.year }}</span></td>
+                <td><span style="font-size:.78rem;color:var(--c-muted)">{{ r.marked_at[11:16] }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div style="padding:32px;text-align:center;color:var(--c-muted)" id="emptyMsg">
+            <i class="fas fa-hourglass-start" style="font-size:2rem;opacity:.3;margin-bottom:8px;display:block"></i>
+            Waiting for students to scan QR code...
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="card">
+        <div class="card-body">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:.85rem">
+            <span style="color:var(--c-muted)">Attendance Rate</span>
+            <span style="font-weight:700;color:var(--c-teal)" id="pct">{{ ((present_count / total_students * 100)|int if total_students > 0 else 0) }}%</span>
+          </div>
+          <div style="height:8px;background:var(--c-border);border-radius:4px">
+            <div id="progressBar" style="height:8px;background:var(--c-teal);border-radius:4px;transition:width .5s;width:{{ ((present_count / total_students * 100)|int if total_students > 0 else 0) }}%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.75rem;color:var(--c-muted)">
+            <span>Present: <strong class="text-teal" id="presentNum">{{ present_count }}</strong></span>
+            <span>Total: <strong>{{ total_students }}</strong></span>
+            <span>Absent: <strong class="text-coral" id="absentNum">{{ total_students - present_count }}</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Generate QR code
+{% if sess.is_active %}
+const qrDiv = document.getElementById('qrDiv');
+if (qrDiv) {
+  const markUrl = window.location.origin + '/attendance/mark/{{ sess.session_token }}';
+  new QRCode(qrDiv, {
+    text: markUrl,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+// Countdown timer
+const expiresAt = new Date('{{ sess.expires_at }}');
+function updateCountdown() {
+  const now = new Date();
+  const diff = expiresAt - now;
+  if (diff <= 0) {
+    document.getElementById('countdown').textContent = 'EXPIRED';
+    document.getElementById('countdown').style.color = 'var(--c-coral)';
+    return;
+  }
+  const m = Math.floor(diff / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('countdown').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  setTimeout(updateCountdown, 1000);
+}
+updateCountdown();
+
+// Live refresh
+async function refreshAttendance() {
+  const resp = await fetch('/api/attendance/live/{{ sess.session_token }}');
+  const data = await resp.json();
+  document.getElementById('presentCount').textContent = data.count;
+  document.getElementById('presentNum').textContent = data.count;
+  const total = {{ total_students }};
+  const pct = total > 0 ? Math.round(data.count / total * 100) : 0;
+  document.getElementById('pct').textContent = pct + '%';
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('absentNum').textContent = total - data.count;
+}
+// Auto-refresh every 5s while live
+setInterval(refreshAttendance, 5000);
+{% endif %}
+</script>
+{% endblock %}

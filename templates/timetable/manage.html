@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% block title %}Manage Timetable – CampusConnect{% endblock %}
+{% block page_title %}Manage Timetable{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-title"><i class="fas fa-edit me-2 text-teal"></i>Manage Timetable</div>
+</div>
+<div class="page-content">
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-plus"></i>Add Entry</div></div>
+        <div class="card-body" style="padding:20px">
+          <form method="POST" action="/timetable/manage">
+            <input type="hidden" name="action" value="add">
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label">Department</label>
+                <select name="department" class="form-select" required>
+                  {% for d in depts %}<option value="{{ d.name }}">{{ d.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-4">
+                <label class="form-label">Year</label>
+                <select name="year" class="form-select" required>
+                  <option value="FE">FE</option><option value="SE">SE</option><option value="TE">TE</option><option value="BE">BE</option>
+                </select>
+              </div>
+              <div class="col-4">
+                <label class="form-label">Semester</label>
+                <select name="semester" class="form-select">
+                  {% for i in range(1,9) %}<option value="{{ i }}">Sem {{ i }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-4">
+                <label class="form-label">Period</label>
+                <select name="period" class="form-select" required>
+                  {% for i in range(1,9) %}<option value="{{ i }}">{{ i }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Day</label>
+                <select name="day" class="form-select" required>
+                  {% for d in ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Subject *</label>
+                <input type="text" name="subject" class="form-control" required placeholder="e.g. Data Structures">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Teacher</label>
+                <select name="teacher_id" class="form-select" onchange="fillTeacher(this)">
+                  <option value="">Select Teacher</option>
+                  {% for t in teachers %}<option value="{{ t.id }}" data-name="{{ t.full_name }}">{{ t.full_name }}</option>{% endfor %}
+                </select>
+                <input type="hidden" name="teacher_name" id="teacherName">
+              </div>
+              <div class="col-6">
+                <label class="form-label">Room</label>
+                <input type="text" name="room" class="form-control" placeholder="CS-101">
+              </div>
+              <div class="col-3">
+                <label class="form-label">From</label>
+                <input type="time" name="time_from" class="form-control">
+              </div>
+              <div class="col-3">
+                <label class="form-label">To</label>
+                <input type="time" name="time_to" class="form-control">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-teal w-100 mt-3"><i class="fas fa-plus me-2"></i>Add to Timetable</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header"><div class="card-header-title"><i class="fas fa-list"></i>All Timetable Entries ({{ tt_all|length }})</div></div>
+        <div class="card-body p-0" style="max-height:500px;overflow-y:auto">
+          {% if tt_all %}
+          <table class="table mb-0">
+            <thead><tr><th>Dept</th><th>Year</th><th>Day</th><th>Period</th><th>Subject</th><th>Teacher</th><th>Room</th><th></th></tr></thead>
+            <tbody>
+              {% for t in tt_all %}
+              <tr>
+                <td><span style="font-size:.75rem;color:var(--c-muted)">{{ t.department[:8] }}</span></td>
+                <td><span class="badge-pill badge-muted">{{ t.year }}</span></td>
+                <td><span style="font-size:.8rem">{{ t.day[:3] }}</span></td>
+                <td><span style="font-weight:700;color:var(--c-teal)">{{ t.period }}</span></td>
+                <td style="font-weight:600;font-size:.85rem">{{ t.subject[:18] }}</td>
+                <td><span style="font-size:.78rem;color:var(--c-muted)">{{ (t.teacher or 'N/A')[:15] }}</span></td>
+                <td><span style="font-size:.78rem;color:var(--c-muted)">{{ t.room or '-' }}</span></td>
+                <td>
+                  <form method="POST" style="display:inline">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="tt_id" value="{{ t.id }}">
+                    <button type="submit" class="btn btn-danger-soft btn-sm" onclick="return confirm('Delete?')"><i class="fas fa-trash"></i></button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div style="padding:32px;text-align:center;color:var(--c-muted)">No timetable entries yet. Add one from the left panel.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function fillTeacher(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  document.getElementById('teacherName').value = opt.getAttribute('data-name') || '';
+}
+</script>
+{% endblock %}
